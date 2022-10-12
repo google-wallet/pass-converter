@@ -1,0 +1,44 @@
+{
+  "flightClasses": [
+    {
+      "issuerName": "Test issuer",
+      "origin": {
+        "gate": "Test origin gate",
+        "airportIataCode": "SYD"
+      },
+      "destination": {
+        "gate": "Test destination gate",
+        "airportIataCode": "SFO"
+      },
+      "flightHeader": {
+        "flightNumber": "73",
+        "carrier": {
+          "carrierIataCode": "QF",
+          "airlineLogo": {
+            "sourceUri": {
+              "uri": "https://lh3.googleusercontent.com/H4uhQFVrzm3vjb6DyuPskqXdoyzGhOzXzLBSJK0c8cPmdIexMqLHoLFyj8T29buCF98DhKYvKYmaMwYWPYsHkwc"
+            }
+          }
+        }
+      },
+      "localScheduledDepartureDateTime": "2033-12-30T04:56:07"
+    }
+  ],
+  "flightObjects": [
+    {
+      "passengerName": "Test passenger",
+      "boardingAndSeatingInfo": {
+        "seatNumber": "K16",
+        "seatClass": "Test seat class"
+      },
+      "reservationInfo": {
+        "confirmationCode": "Test confirmation code"
+      },
+      "barcode": {
+        "type": "QR_CODE",
+        "value": "Test barcode"
+      },
+      "hexBackgroundColor": "#1D15C0"
+    }
+  ]
+}

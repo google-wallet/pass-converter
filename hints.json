@@ -1,0 +1,21 @@
+{
+  "event.name": "",
+  "flight.originCode": "",
+  "flight.destinationCode": "",
+  "flight.passenger": "",
+  "flight.seatNumber": "",
+  "flight.seatClass": "",
+  "flight.gate": "",
+  "flight.flightNumber": "",
+  "flight.date": "",
+  "flight.time": "",
+  "flight.confirmationCode": "",
+  "loyalty.primaryPoints": "",
+  "loyalty.secondaryPoints": "",
+  "transit.originName": "",
+  "transit.originDate": "",
+  "transit.originTime": "",
+  "transit.destinationName": "",
+  "transit.destinationDate": "",
+  "transit.destinationTime": ""
+}

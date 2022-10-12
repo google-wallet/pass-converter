@@ -1,0 +1,47 @@
+{
+  "loyaltyClasses": [
+    {
+      "issuerName": "Test issuer",
+      "programName": "Test program name",
+      "programLogo": {
+        "sourceUri": {
+          "uri": "https://lh3.googleusercontent.com/H4uhQFVrzm3vjb6DyuPskqXdoyzGhOzXzLBSJK0c8cPmdIexMqLHoLFyj8T29buCF98DhKYvKYmaMwYWPYsHkwc"
+        }
+      },
+      "barcode": {
+        "type": "QR_CODE",
+        "value": "Test barcode"
+      },
+      "hexBackgroundColor": "#1D15C0"
+    }
+  ],
+  "loyaltyObjects": [
+    {
+      "loyaltyPoints": {
+        "localizedLabel": {
+          "defaultValue": {
+            "language": "en",
+            "value": "Test points"
+          }
+        },
+        "balance": {
+          "int": 12
+        }
+      },
+      "secondaryLoyaltyPoints": {
+        "localizedLabel": {
+          "defaultValue": {
+            "language": "en",
+            "value": "Test balance"
+          }
+        },
+        "balance": {
+          "money": {
+            "currencyCode": "USD",
+            "micros": 3456
+          }
+        }
+      }
+    }
+  ]
+}

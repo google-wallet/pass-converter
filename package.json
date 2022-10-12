@@ -1,0 +1,27 @@
+{
+  "dependencies": {
+    "@google-cloud/storage": "^6.2.2",
+    "adm-zip": "^0.5.9",
+    "airlines-iata-codes": "^1.0.1",
+    "axios": "^0.27.2",
+    "chrono-node": "^2.3.9",
+    "express": "^4.18.1",
+    "express-fileupload": "^1.4.0",
+    "google-auth-library": ">=5.9.2",
+    "jsonwebtoken": ">=8.5.1",
+    "nanoid": "^3.3.4",
+    "node-cache": "^5.1.2",
+    "node-fetch": "^3.2.8",
+    "open": "^8.4.0",
+    "strip-comments": "^2.0.1",
+    "strip-json-trailing-commas": "^1.1.0",
+    "tinycolor2": "^1.4.2"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^27.0.6",
+    "prettier": "2.7.1"
+  }
+}

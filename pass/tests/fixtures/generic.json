@@ -1,0 +1,29 @@
+{
+  "genericClasses": [{}],
+  "genericObjects": [
+    {
+      "barcode": {
+        "type": "QR_CODE",
+        "value": "Test barcode"
+      },
+      "hexBackgroundColor": "#1D15C0",
+      "cardTitle": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Test title"
+        }
+      },
+      "header": {
+        "defaultValue": {
+          "language": "en",
+          "value": "Test header"
+        }
+      },
+      "logo": {
+        "sourceUri": {
+          "uri": "https://lh3.googleusercontent.com/H4uhQFVrzm3vjb6DyuPskqXdoyzGhOzXzLBSJK0c8cPmdIexMqLHoLFyj8T29buCF98DhKYvKYmaMwYWPYsHkwc"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+arrowParens: avoid
+printWidth: 120
+quoteProps: consistent
+semi: true
+singleQuote: true
+tabWidth: 2
+trailingComma: all
+overrides:
+  - files: '*.md'
+    options:
+      parser: markdown
+      proseWrap: always
+      printWidth: 10000

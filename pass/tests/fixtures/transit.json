@@ -1,0 +1,26 @@
+{
+  "transitClasses": [
+    {
+      "issuerName": "Test issuer",
+      "transitType": "OTHER",
+      "logo": {
+        "sourceUri": {
+          "uri": "https://lh3.googleusercontent.com/H4uhQFVrzm3vjb6DyuPskqXdoyzGhOzXzLBSJK0c8cPmdIexMqLHoLFyj8T29buCF98DhKYvKYmaMwYWPYsHkwc"
+        }
+      }
+    }
+  ],
+  "transitObjects": [
+    {
+      "departureDateTime": "2033-12-30T04:56:07",
+      "arrivalDateTime": "2033-12-31T04:56:07",
+      "originName": "Test origin name",
+      "destinationName": "Test destination name",
+      "barcode": {
+        "type": "QR_CODE",
+        "value": "Test barcode"
+      },
+      "hexBackgroundColor": "#1D15C0"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "eventTicketClasses": [
+    {
+      "issuerName": "Test issuer",
+      "eventName": "Test event name",
+      "logo": {
+        "sourceUri": {
+          "uri": "https://lh3.googleusercontent.com/H4uhQFVrzm3vjb6DyuPskqXdoyzGhOzXzLBSJK0c8cPmdIexMqLHoLFyj8T29buCF98DhKYvKYmaMwYWPYsHkwc"
+        }
+      }
+    }
+  ],
+  "eventTicketObjects": [
+    {
+      "barcode": {
+        "type": "QR_CODE",
+        "value": "Test barcode"
+      },
+      "hexBackgroundColor": "#1D15C0"
+    }
+  ]
+}
