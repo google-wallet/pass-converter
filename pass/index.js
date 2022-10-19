@@ -573,7 +573,7 @@ class Pass {
         language: language,
         value: this.strings[language] && this.strings[language][value] ? this.strings[language][value] : value,
       };
-      if (String(field.value).trim() === '') {
+      if (field.value === undefined || String(field.value).trim() === '') {
         // The field is an empty string
         // Return an empty value instead
         field.value = this.emptyValue;
