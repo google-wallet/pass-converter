@@ -168,7 +168,7 @@ class Flight extends Pass {
         airportIataCode: this.destination,
       },
       flightHeader: {
-        flightNumber: this.flightNumber.slice(2),
+        flightNumber: this.flightNumber.slice(2).trim(),
         carrier: {
           carrierIataCode: this.carrierCode,
           airlineLogo: this.toGoogleImageField(await imageHandler(this.files['icon@2x.png'])),
