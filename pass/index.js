@@ -457,8 +457,8 @@ class Pass {
       }),
     );
 
-    // Gets the CardRowTemplateInfo for the pass
-    const cardRowTemplateInfos = this.frontContent.map(row => {
+    // Gets the CardRowTemplateInfo for the pass, ensuring at most 3 rows (the remaining will show in detail section)
+    const cardRowTemplateInfos = this.frontContent.slice(0, 3).map(row => {
       // Converts a field to a TemplateItem
       const templateInfoJSON = field => ({
         firstValue: {
