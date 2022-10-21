@@ -69,7 +69,7 @@ class Flight extends Pass {
       gate: this.hintedPkPassFieldValue('flight.gate'),
       origin: json.departureCode || this.hintedPkPassFieldValue('flight.originCode'),
       destination: json.arrivalCode || this.hintedPkPassFieldValue('flight.destinationCode'),
-      flightNumber: this.hintedPkPassFieldValue('flight.flightNumber'),
+      flightNumber: this.hintedPkPassFieldValue('flight.flightNumber').replace(/\s/g, ''),
       date: this.hintedPkPassFieldValue('flight.date'),
       time: this.hintedPkPassFieldValue('flight.time'),
       confirmationCode: this.hintedPkPassFieldValue('flight.confirmationCode'),
@@ -168,7 +168,7 @@ class Flight extends Pass {
         airportIataCode: this.destination,
       },
       flightHeader: {
-        flightNumber: this.flightNumber.slice(2).trim(),
+        flightNumber: this.flightNumber.slice(2),
         carrier: {
           carrierIataCode: this.carrierCode,
           airlineLogo: this.toGoogleImageField(await imageHandler(this.files['icon@2x.png'])),
