@@ -122,7 +122,7 @@ class Pass {
     );
 
     // Parse the 'pass.json' file in the archive
-    const json = JSON.parse(stripJsonTrailingCommas(files['pass.json'].toString('utf8')));
+    const json = JSON.parse(stripJsonTrailingCommas(files['pass.json'].toString('utf8').trim()));
 
     // Match the PKPass to the appropriate Google Wallet pass type
     const pass = createPassForType(cls => {
