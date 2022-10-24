@@ -69,7 +69,7 @@ class Flight extends Pass {
       gate: this.hintedPkPassFieldValue('flight.gate'),
       origin: json.departureCode || this.hintedPkPassFieldValue('flight.originCode'),
       destination: json.arrivalCode || this.hintedPkPassFieldValue('flight.destinationCode'),
-      flightNumber: this.hintedPkPassFieldValue('flight.flightNumber'),
+      flightNumber: this.hintedPkPassFieldValue('flight.flightNumber').replace(/\s/g, ''),
       date: this.hintedPkPassFieldValue('flight.date'),
       time: this.hintedPkPassFieldValue('flight.time'),
       confirmationCode: this.hintedPkPassFieldValue('flight.confirmationCode'),
