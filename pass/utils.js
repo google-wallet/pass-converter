@@ -112,7 +112,10 @@ class Lproj {
     const parts = stripComments(s)
       .split('";')
       .map(line => {
-        return line.slice(line.indexOf('"') + 1).replace(/\n/, '').split('" = "');
+        return line
+          .slice(line.indexOf('"') + 1)
+          .replace(/\n/, '')
+          .split('" = "');
       })
       .filter(line => line.length > 1);
     return Object.fromEntries(parts);

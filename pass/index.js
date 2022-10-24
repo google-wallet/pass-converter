@@ -73,6 +73,14 @@ class Pass {
     return this.constructor.googlePrefix;
   }
 
+  set issuer(issuer) {
+    this._issuer = issuer;
+  }
+
+  get issuer() {
+    return this._issuer || process.env.CONVERTER_DEFAULT_ORG_NAME || process.env.PKPASS_DEFAULT_ORG_NAME; // PKPASS_DEFAULT_ORG_NAME was renamed.
+  }
+
   /**
    * Get the default language to apply to passes (derived either from the pass
    *     itself or from the CONVERTER_DEFAULT_LANGUAGE environment variable)
@@ -291,12 +299,6 @@ class Pass {
     // Creates a buffer for stringified JSON objects
     const jsonBuffer = obj => Buffer.from(JSON.stringify(obj, null, 2), 'utf8');
 
-    // Set the description if not already
-    this.description ||= this.title;
-
-    // Set the issuer if not already
-    this.issuer ||= process.env.PKPASS_DEFAULT_ORG_NAME;
-
     // Create the 'pass.json' file and add it to the archive
     zip.addFile(
       'pass.json',
@@ -306,7 +308,7 @@ class Pass {
         serialNumber: crypto.randomBytes(16).toString('hex'),
         formatVersion: 1,
         logoText: this.title,
-        description: this.description,
+        description: this.description || this.title,
         organizationName: this.issuer,
         foregroundColor: color(this.backgroundColor.isDark() ? 'white' : 'black').toRgbString(),
         backgroundColor: this.backgroundColor.toRgbString(),
