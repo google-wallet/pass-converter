@@ -37,7 +37,7 @@ class Offer extends Pass {
   fromPkPass(json) {
     this.update({
       title: json.description || json.logoText,
-      logo: this.files['icon@2x.png'],
+      logo: this.image('icon'),
     });
   }
 

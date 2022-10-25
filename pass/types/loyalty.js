@@ -39,7 +39,7 @@ class Loyalty extends Pass {
     this.update({
       primaryBalance: this.hintedPkPassField('loyalty.primaryBalance'),
       secondaryBalance: this.hintedPkPassField('loyalty.secondaryBalance'),
-      logo: this.files['icon@2x.png'],
+      logo: this.image('icon'),
     });
   }
 

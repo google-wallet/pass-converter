@@ -81,6 +81,10 @@ class Pass {
     return this._issuer || process.env.CONVERTER_DEFAULT_ORG_NAME || process.env.PKPASS_DEFAULT_ORG_NAME; // PKPASS_DEFAULT_ORG_NAME was renamed.
   }
 
+  image(name) {
+    return this.files[`${name}@2x.png`] || this.files[`${name}.png`];
+  }
+
   /**
    * Get the default language to apply to passes (derived either from the pass
    *     itself or from the CONVERTER_DEFAULT_LANGUAGE environment variable)
@@ -146,7 +150,6 @@ class Pass {
     pass.update({
       title: json.logoText,
       description: json.description,
-      logo: files['icon@2x.png'],
       barcode: barcodes.fromPkPass(json.barcodes ? json.barcodes : json.barcode ? [json.barcode] : []),
       issuer: json.organizationName,
       backgroundColor: color(json.backgroundColor),
@@ -162,6 +165,7 @@ class Pass {
     });
 
     // Return the derived Pass object
+    pass.logo = pass.image('icon');
     pass.fromPkPass(json);
     return pass;
   }
