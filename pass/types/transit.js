@@ -82,12 +82,14 @@ class Transit extends Pass {
    * @instance
    */
   fromGoogle(obj, cls) {
-    const originDateTime = parseDate(obj.departureDateTime);
-    const destinationDateTime = parseDate(obj.arrivalDateTime);
-    const originName = obj.originName ? this.fromGoogleLocalizedField(obj, 'originName') : obj.originStationCode;
-    const destinationName = obj.destinationName
-      ? this.fromGoogleLocalizedField(obj, 'destinationName')
-      : obj.destinationStationCode;
+    const originDateTime = parseDate(obj.ticketLeg.departureDateTime);
+    const destinationDateTime = parseDate(obj.ticketLeg.arrivalDateTime);
+    const originName = obj.ticketLeg.originName
+      ? this.fromGoogleLocalizedField(obj.ticketLeg, 'originName')
+      : obj.ticketLeg.originStationCode;
+    const destinationName = obj.ticketLeg.destinationName
+      ? this.fromGoogleLocalizedField(obj.ticketLeg, 'destinationName')
+      : obj.ticketLeg.destinationStationCode;
 
     this.update({
       title: `${originName} - ${destinationName}`,
@@ -121,7 +123,7 @@ class Transit extends Pass {
       ],
     });
 
-    this.content.transitType = TRANSIT_TYPES[this.transitType].pkpass;
+    this.content.transitType = TRANSIT_TYPES[this.transitType.toUpperCase()].pkpass;
     return super.toPkPass(imageHandler);
   }
 

@@ -12,10 +12,22 @@
   ],
   "transitObjects": [
     {
-      "departureDateTime": "2033-12-30T04:56:07",
-      "arrivalDateTime": "2033-12-31T04:56:07",
-      "originName": "Test origin name",
-      "destinationName": "Test destination name",
+      "ticketLeg": {
+        "departureDateTime": "2033-12-30T04:56:07",
+        "arrivalDateTime": "2033-12-31T04:56:07",
+        "originName": {
+          "defaultValue": {
+            "language": "en",
+            "value": "Test origin name"
+          }
+        },
+        "destinationName": {
+          "defaultValue": {
+            "language": "en",
+            "value": "Test destination name"
+          }
+        }
+      },
       "barcode": {
         "type": "QR_CODE",
         "value": "Test barcode"

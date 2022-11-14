@@ -52,7 +52,7 @@ Converts passes locally. If the output path is ommitted, the converter will outp
 node app.js
 ```
 
-The web service expects a `POST` request to the root URL (eg "/") with `multipart/form-data` encoding. The request should include a single pass file.
+The web service expects a `POST` request to the URL `/convert/` with `multipart/form-data` encoding. The request should include a single pass file. Updating passes is also supported via `PATCH` requests to the same `/convert/` URL. See the [Updatable Passes](#updatable-passes) section for more detail.
 
 #### Authentication
 
@@ -224,6 +224,20 @@ The following hints are currently supported. An example `hints.json` is included
 |                | `transit.destinationName` | Destination name          | [`TransitObject.ticketLeg.destinationName`](https://developers.google.com/wallet/tickets/transit-passes/qr-code/rest/v1/transitobject#TicketLeg)             |
 |                | `transit.destinationDate` | Arriving date             | [`TransitObject.ticketLeg.arrivalDateTime`](https://developers.google.com/wallet/tickets/transit-passes/qr-code/rest/v1/transitobject#ticketleg)             |
 |                | `transit.destinationTime` | Arriving time             | [`TransitObject.ticketLeg.arrivalDateTime`](https://developers.google.com/wallet/tickets/transit-passes/qr-code/rest/v1/transitobject#ticketleg)             |
+
+## Updatable Passes
+
+Updating passes is supported via `PATCH` requests to the `/convert/` URL. These requests should contain a single pass file containing the content to use when updating an existing pass. The pass file should contain a valid identifier (eg `id` for a Google Pass, or `serialNumber` for a PKPass) that references the pass to update.
+
+Following is the behavior for each of the formats:
+
+### Apple `PKPass`
+
+When a `PKPass` file is sent in the `PATCH` request, it is converted to a Google Wallet pass and updated via the Google Wallet API.
+
+### Google Wallet pass
+
+When a Google Wallet pass (.json) file is sent in the `PATCH` request, it is first updated via the Google Wallet API. Then, if the corresponding PKPass file that was created when the Google Wallet pass was created has been registered on an iOS device, a push token is sent to the iOS device signalling an update is available. The pass converter implements the web service endpoints required for managing updates to PKPass files. Consult the [Apple documentation](https://developer.apple.com/documentation/walletpasses/adding_a_web_service_to_update_passes) for further information.
 
 ## Troubleshooting
 

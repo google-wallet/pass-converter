@@ -22,6 +22,7 @@ const spawnSync = require('child_process').spawnSync;
 const stripJsonTrailingCommas = require('strip-json-trailing-commas').default;
 const AdmZip = require('adm-zip');
 const color = require('tinycolor2');
+const nanoid = require('nanoid').nanoid;
 const { barcodes, lproj, flatten } = require('./utils.js');
 
 /**
@@ -148,6 +149,8 @@ class Pass {
 
     // Set the properties of the Pass object from the PKPass content
     pass.update({
+      id: json.serialNumber,
+      typeId: json.passTypeIdentifier,
       title: json.logoText,
       description: json.description,
       barcode: barcodes.fromPkPass(json.barcodes ? json.barcodes : json.barcode ? [json.barcode] : []),
@@ -275,8 +278,13 @@ class Pass {
             }),
           );
 
+    const id = jwtPayload[`${googlePrefix}Objects`][0].id || nanoid();
+    const classId = jwtPayload[`${googlePrefix}Objects`][0].classId || nanoid();
+
     // Set the properties of the Pass from the Google Wallet pass content
     pass.update({
+      id: id ? id.replace(`${process.env.GOOGLE_ISSUER_ID}\.`, '') : undefined,
+      typeId: classId ? classId.replace(`${process.env.GOOGLE_ISSUER_ID}\.`, '') : undefined,
       issuer: jwtPayload[`${googlePrefix}Classes`][0].issuerName,
       barcode: barcodes.fromGoogle(json.barcode),
       backgroundColor: color(json.hexBackgroundColor),
@@ -309,7 +317,9 @@ class Pass {
       jsonBuffer({
         passTypeIdentifier: process.env.PKPASS_PASS_TYPE_ID,
         teamIdentifier: process.env.PKPASS_TEAM_ID,
-        serialNumber: crypto.randomBytes(16).toString('hex'),
+        serialNumber: this.id,
+        webServiceURL: this.webServiceURL,
+        authenticationToken: this.authenticationToken,
         formatVersion: 1,
         logoText: this.title,
         description: this.description || this.title,
@@ -526,6 +536,7 @@ class Pass {
     return {
       [`${this.googlePrefix}Classes`]: [
         {
+          id: `${process.env.GOOGLE_ISSUER_ID}.${this.typeId}`,
           reviewStatus: 'UNDER_REVIEW',
           issuerName: this.issuer,
           classTemplateInfo: {
@@ -537,6 +548,8 @@ class Pass {
       ],
       [`${this.googlePrefix}Objects`]: [
         {
+          id: `${process.env.GOOGLE_ISSUER_ID}.${this.id}`,
+          classId: `${process.env.GOOGLE_ISSUER_ID}.${this.typeId}`,
           barcode:
             this.barcode === undefined
               ? undefined

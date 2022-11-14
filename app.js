@@ -18,6 +18,7 @@ const { Storage } = require('@google-cloud/storage');
 const { GoogleAuth } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const Pass = require('./pass');
+const database = require('./database.js');
 const express = require('express');
 const upload = require('express-fileupload');
 const fs = require('fs');
@@ -25,6 +26,7 @@ const path = require('path');
 const URL = require('url').URL;
 const NodeCache = require('node-cache');
 const nanoid = require('nanoid').nanoid;
+const apn = require('apn');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 /**
@@ -32,12 +34,6 @@ const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fet
  * @type {string}
  */
 const serviceAccountFile = process.env.GOOGLE_APPLICATION_CREDENTIALS || '/path/to/key.json';
-
-/**
- * The issuer ID being updated in this request
- * @type {string}
- */
-const issuerId = process.env.GOOGLE_ISSUER_ID || '<issuer ID>';
 
 /**
  * Google Cloud Storage bucket name
@@ -119,9 +115,20 @@ async function pkpassImageHandler(imageBuffer, imageHost) {
  * @param {Object} googlePass The JWT's `payload` property
  * @returns {Buffer} Binary string buffer of the PKPass file data
  */
-async function googleToPkPass(googlePass) {
+async function googleToPkPass(googlePass, apiHost) {
   // Extract the pass data from the JWT payload
   const pass = Pass.fromGoogle(googlePass);
+
+  pass.webServiceURL = apiHost;
+  pass.authenticationToken = nanoid();
+
+  database.getRepository('passes').save({
+    serialNumber: pass.id,
+    webServiceURL: pass.webServiceURL,
+    authenticationToken: pass.authenticationToken,
+    passTypeId: process.env.PKPASS_PASS_TYPE_ID,
+    googlePrefix: pass.googlePrefix,
+  });
 
   // Return a string buffer
   return Buffer.from(await pass.toPkPass(googleImageHandler), 'base64');
@@ -161,15 +168,6 @@ async function pkPassToGoogle(pkPass, imageHost) {
 
   // Convert to Google Wallet pass
   const googlePass = await pass.toGoogle(async imageBuffer => pkpassImageHandler(imageBuffer, imageHost));
-
-  // Generate a class ID and object ID
-  const classId = nanoid();
-  const objectId = nanoid();
-
-  // Add the IDs to the Google Wallet pass
-  googlePass[pass.googlePrefix + 'Classes'][0].id = `${issuerId}.${classId}`;
-  googlePass[pass.googlePrefix + 'Objects'][0].id = `${issuerId}.${objectId}-${classId}`;
-  googlePass[pass.googlePrefix + 'Objects'][0].classId = `${issuerId}.${classId}`;
 
   // Create the JWT token for the "Save to Wallet" URL, avoiding the Wallet API if the token is small enough.
   // If the token is too large, strip the class from it and save it via API, and try again.
@@ -236,37 +234,31 @@ function sendBuffer(res, mimeType, name, buffer) {
 
 // Start the Express server
 const app = express();
-
-// Mount the upload middleware to the root path
 app.use(upload());
+app.use(express.json());
 
 // Check if this is running as a demo
 // If so, mount the static files middleware, using the 'public' directory
 // This serves the demo page
 const arg = i => (process.argv.length >= i + 1 ? process.argv[i] : undefined);
-const demo = arg(2) === 'demo';
-if (demo) {
+const DEMO = arg(2) === 'demo';
+if (DEMO) {
   app.use(express.static(path.resolve(__dirname, 'public')));
 }
 
 /**
  * Get a hosted image (used by Google Wallet API during pass creation)
- * @name get/image/<name>
- * @param {string} path Express path
- * @param {callback} middleware Express middleware
  */
 app.get('/image/:name', (req, res) => {
   sendBuffer(res, 'image/png', req.params.name, images.get(req.params.name));
 });
 
 /**
- * Recieve a pass object and convert it
- * @name post/
- * @param {string} path Express path
- * @param {callback} middleware Express middleware
+ * Middleware wrapping pass conversion methods. Ensures auth header present,
+ * and sets some request variables for the pass conversion to access.
  */
-app.post('/', async (req, res) => {
-  if (!demo && req.headers[process.env.CONVERTER_AUTH_HEADER] === undefined) {
+app.use('/convert/', (req, res, next) => {
+  if (!DEMO && req.headers[process.env.CONVERTER_AUTH_HEADER] === undefined) {
     if (process.env.CONVERTER_AUTH_HEADER === undefined) {
       console.error('env var CONVERTER_AUTH_HEADER must be defined and set by upstream web server');
     }
@@ -274,40 +266,178 @@ app.post('/', async (req, res) => {
     return;
   } else if (!req.files) {
     // No files were included in the request
-    if (demo) {
-      res.redirect('/');
-    } else {
-      res.status(400).end();
-    }
+    res.status(400).end();
     return;
   }
 
-  // Get the files in the request and convert to string data
-  const data = req.files[Object.keys(req.files)[0]].data;
-  const text = data.toString();
+  req.passFile = req.files[Object.keys(req.files)[0]].data;
+  req.passText = req.passFile.toString();
+  req.fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
 
   try {
-    if (text.charAt(0) === '{') {
-      // The file text is a JSON object (Google Wallet pass)
-      // Convert it to a PKPass
-      const pkPassBuffer = await googleToPkPass(JSON.parse(text));
-      const name = 'pass.pkpass';
-
-      // Save the pass to the hosting server
-      sendBuffer(res, 'application/vnd.apple.pkpass', name, pkPassBuffer);
-    } else {
-      // The file is a PKPass
-      // Convert to a Google Wallet pass
-      const host = `${req.protocol}://${req.get('host')}${req.originalUrl}image/`;
-      const googlePassUrl = await pkPassToGoogle(data, host);
-
-      // Redirect to the Add to Google Wallet URL
-      res.redirect(googlePassUrl);
-    }
+    next();
   } catch (error) {
     console.error(error);
     res.status(500).send('Conversion failed, please check console output for details');
   }
+});
+
+/**
+ * Receive a pass file and creates passes for the other supported platforms.
+ */
+app.post('/convert/', async (req, res) => {
+  if (req.passText.charAt(0) === '{') {
+    // The file text is a JSON object (Google Wallet pass), convert it to a PKPass
+    const pkPassBuffer = await googleToPkPass(JSON.parse(req.passText), req.fullUrl);
+    // Respond with the PKPass file
+    sendBuffer(res, 'application/vnd.apple.pkpass', 'pass.pkpass', pkPassBuffer);
+  } else {
+    // The file is a PKPass, convert to a Google Wallet pass
+    const googlePassUrl = await pkPassToGoogle(req.passFile, `${req.fullUrl}image/`);
+    // Redirect to the Add to Google Wallet URL
+    res.redirect(googlePassUrl);
+  }
+});
+
+/**
+ * Receive a pass file and uses it to update existing passes for all supported platforms.
+ */
+app.patch('/convert/', async (req, res) => {
+  let pass, googlePass;
+  if (req.passText.charAt(0) === '{')   {
+    googlePass = JSON.parse(req.passText);
+    pass = Pass.fromGoogle(googlePass);
+
+    database
+      .getRepository('registrations')
+      .find({ serialNumber: pass.id })
+      .then(registrations => {
+        const apnProvider = new apn.Provider({
+          production: false,
+          cert: process.env.PKPASS_APN_KEY_PATH,
+          key: process.env.PKPASS_APN_CERT_PATH,
+        });
+        registrations.forEach(registration => {
+          apnProvider.send(new apn.Notification(), registration.pushToken).then(result => {
+            console.log('apn push', result);
+          });
+        });
+      });
+  } else {
+    pass = Pass.fromPkPass(req.passFile);
+    googlePass = await pass.toGoogle(async imageBuffer => pkpassImageHandler(imageBuffer, `${req.fullUrl}image/`));
+  }
+
+  // Update the object via API.
+  try {
+    const id = googlePass[pass.googlePrefix + 'Objects'][0].id;
+    const response = await httpClient.request({
+      url: `https://walletobjects.googleapis.com/walletobjects/v1/${pass.googlePrefix}Objecst/${id}`,
+      method: 'PATCH',
+      data: googlePass[pass.googlePrefix + 'Objects'][0],
+    });
+    res.json(response.data);
+  } catch (error) {
+    console.error(error);
+    res.status(error.response && error.response.status ? error.response.status : 400).end();
+  }
+});
+
+// Remaining endpoints implement the spec for updatable PKPass files,
+// as per https://developer.apple.com/documentation/walletpasses/adding_a_web_service_to_update_passes
+
+/**
+ * Middleware wrapping the endpoints for managing PKPass updates.
+ * Validates auth token against database, and assigns matching pass record to the request.
+ */
+app.use('/v1/', (req, res, next) => {
+  const prefix = 'ApplePass ';
+  const header = req.headers['http_authorization'];
+  const authenticationToken = header && header.indexOf(prefix) === 0 ? header.replace(prefix, '') : '';
+
+  database
+    .getRepository('passes')
+    .findOne({
+      where: {
+        serialNumber: req.params.serialNumber,
+        passTypeId: req.params.passTypeId,
+        authenticationToken: authenticationToken,
+      },
+    })
+    .then(pass => {
+      if (pass === null) {
+        res.status(401).end();
+      } else {
+        req.passRecord = pass;
+        next();
+      }
+    });
+});
+
+/**
+ * Called when PKPass is added to iOS device - create a registration record with push token we can send when pass is later updated.
+ */
+app.post('/v1/devices/:deviceId/registrations/:passTypeId/:serialNumber', (req, res) => {
+  const uuid = `${req.params.device_id}-${req.params.serial_number}`;
+  const registrations = database.getRepository('registrations');
+
+  registrations.count({ where: { uuid } }).then(count => {
+    const status = count === 0 ? 201 : 200;
+    if (status === 201) {
+      registrations.save({
+        uuid: uuid,
+        deviceId: req.params.passTypeId,
+        passTypeId: req.params.passTypeId,
+        serialNumber: req.params.serialNumber,
+        pushToken: req.body['pushToken'],
+      });
+    }
+    res.status(status).end();
+  });
+});
+
+/**
+ * Called when updated PKPass is requested.
+ */
+app.get('/v1/passes/:pass_type_id/:serial_number', async (req, res) => {
+  // Retrieve pass content from Wallet API.
+  httpClient
+    .request({
+      url: `https://walletobjects.googleapis.com/walletobjects/v1/${req.passRecord.googlePrefix}Object/${process.env.GOOGLE_ISSUER_ID}.${req.passRecord.serialNumber}`,
+      method: 'GET',
+    })
+    .then(response => {
+      // Convert to PKPass and send as response.
+      Pass.fromGoogle({
+        [`${req.passRecord.googlePrefix}Classes`]: [response.data.classReference],
+        [`${req.passRecord.googlePrefix}Objects`]: [response.data],
+      })
+        .toPkPass(googleImageHandler)
+        .then(pkPassBuffer => {
+          sendBuffer(res, 'application/vnd.apple.pkpass', 'pass.pkpass', Buffer.from(pkPassBuffer, 'base64'));
+        });
+    })
+    .catch(error => {
+      console.error('Updated PKPass requested, but could not retrieve', error);
+      res.status(400).end();
+    });
+});
+
+/**
+ * Called when PKPass is removed from device - remove registration record.
+ */
+app.delete('/v1/devices/:device_id/registrations/:pass_type_id/:serial_number', (req, res) => {
+  const uuid = `${req.params.device_id}-${req.params.serial_number}`;
+  const registrations = database.getRepository('registrations');
+
+  registrations.findOne({ where: { uuid } }).then(registration => {
+    let status = 401;
+    if (registration != null) {
+      status = 201;
+      registrations.remove(registration);
+    }
+    res.status(status).end();
+  });
 });
 
 /**
@@ -316,12 +446,10 @@ app.post('/', async (req, res) => {
  * @param {string} outputPath Path to save converted pass
  */
 async function convertPassLocal(inputPath, outputPath) {
-  // Get the file extension
-  const ext = path.extname(inputPath);
-
-  // Convert the pass to stringified JSON
+  // Converts the pass to stringified JSON
   const stringify = pass => JSON.stringify(pass, null, 2);
 
+  const ext = path.extname(inputPath);
   let pass;
   switch (ext) {
     case '.pkpass':
@@ -335,21 +463,18 @@ async function convertPassLocal(inputPath, outputPath) {
   }
 
   if (outputPath) {
+    // Write to local filesystem
     if (ext === '.pkpass') {
       // Convert the pass to a string
       pass = stringify(pass);
     }
-
-    // Output to local filesystem
     fs.writeFileSync(outputPath, pass);
   } else {
-    // Log the JSON output to the console
+    // Write the JSON output to the console
     if (ext === '.json') {
-      // For PKPass, only log the pass.json contents
+      // For PKPass, use the pass.json contents
       pass = JSON.parse(new require('adm-zip')(pass).getEntry('pass.json').getData().toString('utf8'));
     }
-
-    // Output to console
     console.log(stringify(pass));
   }
 }
@@ -358,10 +483,11 @@ async function convertPassLocal(inputPath, outputPath) {
  * Entrypoint - Handles command-line and Express server invocation
  */
 async function main() {
-  if (arg(2) && !demo) {
+  if (arg(2) && !DEMO) {
     // Command-line invocation
     await convertPassLocal(arg(2), arg(3));
   } else {
+    database.initialize();
     // Express server invocation
     const host = process.env.CONVERTER_BIND_HOST || '127.0.0.1';
     const port = process.env.CONVERTER_BIND_PORT || 3000;

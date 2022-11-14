@@ -1,4 +1,5 @@
 samples/*
+*.sqlite
 
 # Operating system
 .DS_Store
