@@ -24,6 +24,7 @@ const AdmZip = require('adm-zip');
 const color = require('tinycolor2');
 const nanoid = require('nanoid').nanoid;
 const { barcodes, lproj, flatten } = require('./utils.js');
+const config = require('../config.js');
 
 /**
  * Class representing a pass. The type is intermediary, and can be converted
@@ -79,7 +80,7 @@ class Pass {
   }
 
   get issuer() {
-    return this._issuer || process.env.CONVERTER_DEFAULT_ORG_NAME || process.env.PKPASS_DEFAULT_ORG_NAME; // PKPASS_DEFAULT_ORG_NAME was renamed.
+    return this._issuer || config.defaultOrgName;
   }
 
   image(name) {
@@ -88,30 +89,15 @@ class Pass {
 
   /**
    * Get the default language to apply to passes (derived either from the pass
-   *     itself or from the CONVERTER_DEFAULT_LANGUAGE environment variable)
-   * @returns {string} The default language or 'en' if none is found
+   *     itself or from config
+   * @returns {string} The default language
    * @instance
    */
   get defaultLanguage() {
-    const defaultLanguage = process.env.CONVERTER_DEFAULT_LANGUAGE || 'en';
-
-    // Check if the pass already has a default language applied
-    if (this.strings && Object.keys(this.strings).length > 0 && !this.strings[defaultLanguage]) {
+    if (this.strings && Object.keys(this.strings).length > 0 && !this.strings[config.defaultLanguage]) {
       return Object.keys(this.strings)[0];
     }
-
-    // Return the default language environment variable value
-    return defaultLanguage;
-  }
-
-  /**
-   * Get the default value to use for empty pass values (derived from the
-   *     CONVERTER_EMPTY_VALUE environment variable)
-   * @returns {string} The default value to use or 'N/A' if none is found
-   * @instance
-   */
-  get emptyValue() {
-    return process.env.CONVERTER_EMPTY_VALUE || 'N/A';
+    return config.defaultLanguage;
   }
 
   /**
@@ -283,8 +269,8 @@ class Pass {
 
     // Set the properties of the Pass from the Google Wallet pass content
     pass.update({
-      id: id ? id.replace(`${process.env.GOOGLE_ISSUER_ID}\.`, '') : undefined,
-      typeId: classId ? classId.replace(`${process.env.GOOGLE_ISSUER_ID}\.`, '') : undefined,
+      id: id ? id.replace(`${config.googleIssuerId}\.`, '') : undefined,
+      typeId: classId ? classId.replace(`${config.googleIssuerId}\.`, '') : undefined,
       issuer: jwtPayload[`${googlePrefix}Classes`][0].issuerName,
       barcode: barcodes.fromGoogle(json.barcode),
       backgroundColor: color(json.hexBackgroundColor),
@@ -315,8 +301,8 @@ class Pass {
     zip.addFile(
       'pass.json',
       jsonBuffer({
-        passTypeIdentifier: process.env.PKPASS_PASS_TYPE_ID,
-        teamIdentifier: process.env.PKPASS_TEAM_ID,
+        passTypeIdentifier: config.pkPassPassTypeId,
+        teamIdentifier: config.pkPassTeamId,
         serialNumber: this.id,
         webServiceURL: this.webServiceURL,
         authenticationToken: this.authenticationToken,
@@ -339,8 +325,8 @@ class Pass {
       }),
     );
 
-    // Set the logo if not already
-    this.logo ||= process.env.PKPASS_DEFAULT_ICON_URL;
+    // Set the logo if none set
+    this.logo ||= config.pkPassDefaultIconUrl;
 
     // Get the logo from the image host
     const logo = await imageHandler(this.logo);
@@ -367,15 +353,15 @@ class Pass {
     // Add the manifest to the archive
     zip.addFile(path.basename(manifestPath), manifest);
 
-    // If the required PKPass environment variables are set, sign the archive
+    // If the required PKPass config is set, sign the archive
     // This creates a "real" PKPass that can be provided to users
     // Otherwise, signing has to be done by another service
     if (
-      process.env.PKPASS_SIGNING_CERT_PATH &&
-      process.env.PKPASS_PRIVATE_KEY_PATH &&
-      process.env.PKPASS_WWDR_CERT_PATH &&
-      process.env.PKPASS_PASS_TYPE_ID &&
-      process.env.PKPASS_TEAM_ID
+      config.pkPassSigningCertPath &&
+      config.pkPassSigningKeyPath &&
+      config.pkPassWwdrCertPath &&
+      config.pkPassPassTypeId &&
+      config.pkPassTeamId
     ) {
       // Create the archive on the filesystem
       const signaturePath = path.join(tempDir, 'signature');
@@ -386,11 +372,11 @@ class Pass {
         'smime',
         '-sign',
         '-signer',
-        process.env.PKPASS_SIGNING_CERT_PATH,
+        config.pkPassSigningCertPath,
         '-inkey',
-        process.env.PKPASS_PRIVATE_KEY_PATH,
+        config.pkPassSigningKeyPath,
         '-certfile',
-        process.env.PKPASS_WWDR_CERT_PATH,
+        config.pkPassWwdrCertPath,
         '-in',
         manifestPath,
         '-out',
@@ -536,7 +522,7 @@ class Pass {
     return {
       [`${this.googlePrefix}Classes`]: [
         {
-          id: `${process.env.GOOGLE_ISSUER_ID}.${this.typeId}`,
+          id: `${config.googleIssuerId}.${this.typeId}`,
           reviewStatus: 'UNDER_REVIEW',
           issuerName: this.issuer,
           classTemplateInfo: {
@@ -548,8 +534,8 @@ class Pass {
       ],
       [`${this.googlePrefix}Objects`]: [
         {
-          id: `${process.env.GOOGLE_ISSUER_ID}.${this.id}`,
-          classId: `${process.env.GOOGLE_ISSUER_ID}.${this.typeId}`,
+          id: `${config.googleIssuerId}.${this.id}`,
+          classId: `${config.googleIssuerId}.${this.typeId}`,
           barcode:
             this.barcode === undefined
               ? undefined
@@ -595,7 +581,7 @@ class Pass {
       if (field.value === undefined || String(field.value).trim() === '') {
         // The field is an empty string
         // Return an empty value instead
-        field.value = this.emptyValue;
+        field.value = config.emptyValue;
       }
 
       // Return the TranslatedString object
@@ -706,7 +692,7 @@ class Pass {
    */
   hintedPkPassField(hintName) {
     // Check if hintName is present in hints.json
-    this._hints ||= require(process.env.PKPASS_HINTS_PATH || '../hints.json');
+    this._hints ||= config.hints;
     const pkpassFieldName = this._hints[hintName];
 
     // Initialize the hint cache if not already done
@@ -750,7 +736,7 @@ class Pass {
     const field = this.hintedPkPassField(name) || { value: '' };
 
     // Set the default value to an empty value if it is null
-    defaultValue ||= this.emptyValue;
+    defaultValue ||= config.emptyValue;
 
     // Return the field value if present, or the default value if not
     return field.value.trim().length > 0 ? field.value : defaultValue;

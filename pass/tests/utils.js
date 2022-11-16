@@ -53,6 +53,6 @@ function pkPassHasValue(contentFields, value) {
   return flatten(Object.values(contentFields)).filter(field => field && value && field.value === value).length > 0;
 }
 
-process.env.PKPASS_HINTS_PATH = path.resolve(__dirname, 'test-hints.json');
+process.env.PASS_CONVERTER_CONFIG_PATH = path.resolve(__dirname, 'test-config.json');
 
 module.exports = { loadPass, pkPassHasValue };

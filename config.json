@@ -1,0 +1,86 @@
+{
+  // Path to Google service account JSON file
+  "googleServiceAccountJsonPath": "",
+
+  // Issuer ID for Google Wallet APIs
+  "googleIssuerId": "",
+
+  // Google Cloud Storage bucket name
+  "googleStorageBucket": "",
+
+  // The URL to an image file to use for the PKPass icon/logo when none unavailable in source pass
+  "pkPassDefaultIconUrl": "",
+
+  // Apple pass type ID
+  "pkPassPassTypeId": "",
+
+  // Apple team ID
+  "pkPassTeamId": "",
+
+  // Path to your private key for signing PKPass files
+  "pkPassSigningKeyPath": "",
+
+  // Path to your certificate for signing PKPass files
+  "pkPassSigningCertPath": "",
+
+  // Path to the Apple WWDR certificate for signing PKPass files
+  "pkPassWwdrCertPath": "",
+
+  // A default value to use for missing fields
+  "emptyValue": "N/A",
+
+  // Default organization/issuer to use when none available in source pass
+  "defaultOrgName": "",
+
+  // The default language to use in Google Wallet passes (PKPass files with translations do not define the default language)
+  "defaultLanguage": "en",
+
+  // The HTTP header name your upstream web server will send to the converter when requests are authenticated
+  "authHeader": "",
+
+  // The HTTP host to bind the converter to when running as a web service
+  "bindHost": "127.0.0.1",
+
+  // The HTTP port to bind the converter to when running as a web service
+  "bindPort": 3000,
+
+  // Config for Apple Push notifications, see:
+  // https://github.com/node-apn/node-apn/blob/master/doc/provider.markdown
+  "apn": {
+    "production": false,
+    "cert": "",
+    "key": ""
+  },
+
+  // Config for database, see:
+  // https://typeorm.io/data-source-options
+  "database": {
+    "type": "sqlite",
+    "database": "database.sqlite",
+    "synchronize": true
+  },
+
+  // Field hints for Google pass required fields, see:
+  // https://github.com/google-pay/pass-converter#hints-for-pkpass-files
+  "hints": {
+    "event.name": "",
+    "flight.originCode": "",
+    "flight.destinationCode": "",
+    "flight.passenger": "",
+    "flight.seatNumber": "",
+    "flight.seatClass": "",
+    "flight.gate": "",
+    "flight.flightNumber": "",
+    "flight.date": "",
+    "flight.time": "",
+    "flight.confirmationCode": "",
+    "loyalty.primaryPoints": "",
+    "loyalty.secondaryPoints": "",
+    "transit.originName": "",
+    "transit.originDate": "",
+    "transit.originTime": "",
+    "transit.destinationName": "",
+    "transit.destinationDate": "",
+    "transit.destinationTime": ""
+  }
+}

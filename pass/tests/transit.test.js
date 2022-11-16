@@ -31,6 +31,6 @@ for (const [fieldName, getField] of Object.entries(fieldTests)) {
 }
 
 test(`a converted transit pkpass has a transit type`, async () => {
-  const { pkPass, pass } = await loadPass('transit.json');
+  const { pkPass, pass } = await loadPass('transit.pkpass');
   expect(pkPass.boardingPass.transitType).toBe('PKTransitTypeGeneric');
 });

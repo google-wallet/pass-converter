@@ -17,7 +17,7 @@
 const { loadPass, pkPassHasValue } = require('./utils.js');
 
 const fieldTests = {
-  primaryBalance: (pass, obj) => obj.loyaltyPoints.balance.int,
+  primaryBalance: (pass, obj) => pass.fromGoogleBalanceField(obj.loyaltyPoints).value,
   secondaryBalance: (pass, obj) => pass.fromGoogleBalanceField(obj.secondaryLoyaltyPoints).value,
 };
 
@@ -28,7 +28,7 @@ for (const [field, getGoogleValue] of Object.entries(fieldTests)) {
   });
 
   test(`a converted loyalty Google pass has the ${field} field value`, async () => {
-    const { googlePass, pass } = await loadPass('loyalty.json');
+    const { googlePass, pass } = await loadPass('loyalty.pkpass');
     expect(getGoogleValue(pass, googlePass.loyaltyObjects[0])).toBe(pass[field].value);
   });
 }

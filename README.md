@@ -56,7 +56,7 @@ The web service expects a `POST` request to the URL `/convert/` with `multipart/
 
 #### Authentication
 
-The web service must have some form of authentication implemented with an upstream web server (like Apache or Nginx). When configuring this in the upstream server, you must define a HTTP header in the request to the web service that the upstream web server will send. The name of the HTTP header must then be defined using the environment variable `CONVERTER_AUTH_HEADER`. Requests to the converter are then restricted to requests containing the HTTP header.
+The web service must have some form of authentication implemented with an upstream web server (like Apache or Nginx). When configuring this in the upstream server, you must define a HTTP header in the request to the web service that the upstream web server will send. The name of the HTTP header must then be defined using the `config.js` variable `authHeader`. Requests to the converter are then restricted to requests containing the HTTP header.
 
 #### Request
 
@@ -117,26 +117,30 @@ Here is a minimal example JWT payload that defines the pass class and pass objec
 
 ## Configuration
 
-The following environment variables are used for configuration. Most of these are covered in more detail in the _External dependencies_ section next.
+Configuration is implemented via a `config.js` file. You can define the path to your `config.js` file using the `PASS_CONVERTER_CONFIG_PATH` environment variable, otherwise the `config.js` file found in the root of this project is used.
 
-| Environment variable             | Description                                                                                                                                       | Example                                       |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
-| `GOOGLE_APPLICATION_CREDENTIALS` | Path to Google service account JSON file                                                                                                          | `/path/to/file.json`                          |
-| `GOOGLE_ISSUER_ID`               | Issuer ID for Google Wallet APIs                                                                                                                  | `1234567890123456789`                         |
-| `GOOGLE_STORAGE_BUCKET`          | Google Cloud Storage bucket name (see [Image hosting](#image-hosting))                                                                            | `mybucket-name`                               |
-| `PKPASS_DEFAULT_ICON_URL`        | The URL to an image file to use for the `PKPass` icon/logo                                                                                        | `https://link/to/icon.png`                    |
-| `PKPASS_HINTS_PATH`              | Path to hints JSON file (see [Hints for pkpass files](#hints-for-pkpass-files))                                                                   | `/path/to/hints.json`                         |
-| `PKPASS_PASS_TYPE_ID`            | Apple pass type ID                                                                                                                                | `.example-company.passes.ticket.event-4631A.` |
-| `PKPASS_PRIVATE_KEY_PATH`        | Path to your private key for signing `PKPass` files                                                                                               | `/path/to/key`                                |
-| `PKPASS_SIGNING_CERT_PATH`       | Path to your certificate for signing `PKPass` files                                                                                               | `/path/to/certificate`                        |
-| `PKPASS_TEAM_ID`                 | Apple team ID                                                                                                                                     | `your-team-ID`                                |
-| `PKPASS_WWDR_CERT_PATH`          | Path to the Apple WWDR certificate for signing `PKPass` files                                                                                     | `/path/to/certificate`                        |
-| `CONVERTER_EMPTY_VALUE`          | A default value to use for missing fields                                                                                                         | `N/A`                                         |
-| `CONVERTER_DEFAULT_ORG_NAME`     | Default organization/issuer to use when none available in source pass                                                                             | `My company name`                             |
-| `CONVERTER_DEFAULT_LANGUAGE`     | The default language to use in Google Wallet passes (`PKPass` files with translations do not define the default language)                         | `en`                                          |
-| `CONVERTER_AUTH_HEADER`          | The HTTP header name your upstream web server will send to the converter when requests are authenticated. (see [Authentication](#authentication)) | `Authorization`                               |
-| `CONVERTER_BIND_HOST`            | The HTTP host to bind the converter to when running as a web service                                                                              | `127.0.0.1`                                   |
-| `CONVERTER_BIND_PORT`            | The HTTP port to bind the converter to when running as a web service                                                                              | `3000`                                        |
+The following variables are defined in the `config.js` file. Most of these are covered in more detail in the _External dependencies_ section next.
+
+| `config.js` variable           | Description                                                                                                                                      | Example                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| `googleServiceAccountJsonPath` | Path to Google service account JSON file                                                                                                         | `/path/to/file.json`                                |
+| `googleIssuerId`               | Issuer ID for Google Wallet APIs                                                                                                                 | `1234567890123456789`                               |
+| `googleStorageBucket`          | Google Cloud Storage bucket name (see [Image hosting](#image-hosting))                                                                           | `my-bucket-name`                                    |
+| `pkPassDefaultIconUrl`         | The URL to an image file to use for the `PKPass` icon/logo when none available in source pass                                                    | `https://link/to/icon.png`                          |
+| `pkPassPassTypeId`             | Apple pass type ID                                                                                                                               | `.example-company.passes.ticket.event-4631A.`       |
+| `pkPassTeamId`                 | Apple team ID                                                                                                                                    | `your-team-id`                                      |
+| `pkPassSigningKeyPath`         | Path to your private key for signing `PKPass` files                                                                                              | `/path/to/key.pem`                                  |
+| `pkPassSigningCertPath`        | Path to your certificate for signing `PKPass` files                                                                                              | `/path/to/cert.pem`                                 |
+| `pkPassWwdrCertPath`           | Path to the Apple WWDR certificate for signing `PKPass` files                                                                                    | `/path/to/wwdr.pem`                                 |
+| `emptyValue`                   | A default value to use for missing fields                                                                                                        | `N/A`                                               |
+| `defaultOrgName`               | Default organization/issuer to use when none available in source pass                                                                            | `My company name`                                   |
+| `defaultLanguage`              | The default language to use in Google Wallet passes (`PKPass` files with translations do not define the default language)                        | `en`                                                |
+| `authHeader`                   | The HTTP header name your upstream web server will send to the converter when requests are authenticated (see [Authentication](#authentication)) | `Authorization`                                     |
+| `bindHost`                     | The HTTP host to bind the converter to when running as a web service                                                                             | `127.0.0.1`                                         |
+| `bindPort`                     | The HTTP port to bind the converter to when running as a web service                                                                             | `3000`                                              |
+| `apn`                          | Config for Apple Push Notifications (see [node-apn documentation](https://github.com/node-apn/node-apn/blob/master/doc/provider.markdown))       | `{"cert": "cert.pem", "key": "key.pem"}`            |
+| `database`                     | Config for database, (see [typeorm documentation](https://typeorm.io/data-source-options))                                                       | `{"type": "sqlite", "database": "database.sqlite"}` |
+| `hints`                        | (Mapping of field name hints, see [Hints for Google passes](#hints-for-google-passes))                                                           | `{"event.name": ""}`                                |
 
 ## External dependencies
 
@@ -147,7 +151,7 @@ When running as a command-line tool, you can convert passes to Google Wallet JWT
 - Create a [Google Cloud project](https://developers.google.com/workspace/guides/create-project)
 - Follow the [prerequisites](https://developers.google.com/wallet/generic/web/prerequisites) for using the Google Wallet APIs (specifically, steps 1 through 4)
 
-Once complete, you should have a service account JSON file and Google Wallet Issuer ID. These must then be configured as the `GOOGLE_APPLICATION_CREDENTIALS` and `GOOGLE_ISSUER_ID` environment variables, respectively.
+Once complete, you should have a service account JSON file and Google Wallet Issuer ID. These must then be configured as the `googleServiceAccountJsonPath` and `googleIssuerId` `config.js` variables, respectively.
 
 ### Image hosting
 
@@ -157,7 +161,7 @@ You can also use [Google Cloud Storage](https://cloud.google.com/storage) to hos
 
 1. [Create a bucket](https://cloud.google.com/storage/docs/creating-buckets)
 2. Use [Cloud Identity and Access Management (Cloud IAM)](https://cloud.google.com/storage/docs/access-control/using-iam-permissions) to give your service account read/write access
-3. Set the `GOOGLE_STORAGE_BUCKET` environment variable to the name of the bucket you created
+3. Set the `googleStorageBucket` `config.js` variable to the name of the bucket you created
 
 ### Creating and signing Apple passes
 
@@ -185,23 +189,23 @@ openssl pkcs12 -in certificates.p12 -clcerts -nokeys -out mycert.pem
 openssl pkcs12 -in certificates.p12 -nocerts -nodes -out mykey.pem
 ```
 
-11. Set the following environment variables:
+11. Set the following `config.js` variables:
 
-| Environment variable       | Value                                                                     |
-| -------------------------- | ------------------------------------------------------------------------- |
-| `PKPASS_TEAM_ID`           | Your Apple team ID (from step 1)                                          |
-| `PKPASS_PASS_TYPE_ID`      | The pass type identifier (from step 2)                                    |
-| `PKPASS_WWDR_CERT_PATH`    | The path to the converted Apple WWDR certificate (_wwdr.pem_ from step 7) |
-| `PKPASS_SIGNING_CERT_PATH` | The path to your signing certificate (_mycert.pem_ from step 9)           |
-| `PKPASS_PRIVATE_KEY_PATH`  | The path to your private key (_mykey.pem_ from step 10)                   |
+| `config.js` key         | Value                                                                     |
+| ----------------------- | ------------------------------------------------------------------------- |
+| `pkPassTeamId`          | Your Apple team ID (from step 1)                                          |
+| `pkPassPassTypeId`      | The pass type identifier (from step 2)                                    |
+| `pkPassWwdrCertPath`    | The path to the converted Apple WWDR certificate (_wwdr.pem_ from step 7) |
+| `pkPassSigningCertPath` | The path to your signing certificate (_mycert.pem_ from step 9)           |
+| `pkPassSigningKeyPath`  | The path to your private key (_mykey.pem_ from step 10)                   |
 
-## Hints for pkpass files
+## Hints for Google passes
 
-`PKPass` files specify pass data using various [`PassFields`](https://developer.apple.com/documentation/walletpasses/passfields) properties (e.g. `auxilaryFields`, `backFields`, and `headerFields`). These allow for variations in pass data specifications. Comparatively, Google Wallet passes often have specific properties dedicated to specific information in passes (such as a flight number in a boarding pass).
+Google Wallet passes often have specific fields dedicated to specific information (such as a flight number in a boarding pass), while `PKPass` files may specify pass data more arbitrarily using [`PassFields`](https://developer.apple.com/documentation/walletpasses/passfields) (e.g. `auxilaryFields`, `backFields`, and `headerFields`).
 
-In order to accommodate for this, you should configure a `hints.json` file, and define its location with the `PKPASS_HINTS_PATH` environment variable. In this file, you specify which `PassFields` properties map to which Google Wallet pass properties.
+In order to accommodate for this, you should configure the `hints` key in the `config.json` file. Here you can specify which `PassFields` properties map to which Google Wallet pass properties.
 
-The following hints are currently supported. An example `hints.json` is included in this repository.
+The following hints are currently supported.
 
 | Pass type      | Hint name                 | Description               | Google Wallet pass property                                                                                                                                  |
 | -------------- | ------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -237,17 +241,19 @@ When a `PKPass` file is sent in the `PATCH` request, it is converted to a Google
 
 ### Google Wallet pass
 
-When a Google Wallet pass (.json) file is sent in the `PATCH` request, it is first updated via the Google Wallet API. Then, if the corresponding PKPass file that was created when the Google Wallet pass was created has been registered on an iOS device, a push token is sent to the iOS device signalling an update is available. The pass converter implements the web service endpoints required for managing updates to PKPass files. Consult the [Apple documentation](https://developer.apple.com/documentation/walletpasses/adding_a_web_service_to_update_passes) for further information.
+When a Google Wallet pass (.json) file is sent in the `PATCH` request, it is first updated via the Google Wallet API. Then, if the corresponding PKPass file that was created when the Google Wallet pass was created has been registered on an iOS device, a push token is sent to the iOS device signaling an update is available. The pass converter implements the web service endpoints required for managing updates to PKPass files. Consult the [Apple documentation](https://developer.apple.com/documentation/walletpasses/adding_a_web_service_to_update_passes) for further information.
+
+**Note:** Managing updates to PKPass files requires the use of both Apple Push Notifications, and an internal database. Each of these are configured via `config.json` (see [configuration](#configuration)). Consult the [node-apn](https://github.com/node-apn/node-apn/blob/master/doc/provider.markdown) and [typeorm](https://typeorm.io/data-source-options) documentation for configuration details.
 
 ## Troubleshooting
 
 On both platforms, most errors occur due to missing fields. You can identify them by checking the below.
 
-### Google Wallet
+### Google Wallet pass
 
 The Google Wallet APIs are used to create passes. When errors occur, the API response is output to the local terminal including a detailed error message.
 
-### Apple
+### Apple `PKPass`
 
 If a PKPass file cannot be opened, follow the below steps.
 

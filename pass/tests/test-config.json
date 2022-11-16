@@ -1,0 +1,24 @@
+// Test config - field hints based on test passes.
+{
+  "hints": {
+    "event.name": "",
+    "flight.passenger": "Passenger",
+    "flight.seatNumber": "Seat",
+    "flight.seatClass": "",
+    "flight.gate": "Gate",
+    "flight.flightNumber": "Flight",
+    "flight.originCode": "From",
+    "flight.destinationCode": "To",
+    "flight.date": "Date",
+    "flight.time": "Time",
+    "flight.confirmationCode": "",
+    "loyalty.primaryPoints": "",
+    "loyalty.secondaryPoints": "",
+    "transit.originName": "Origin",
+    "transit.originDate": "Departing",
+    "transit.originTime": "",
+    "transit.destinationName": "Destination",
+    "transit.destinationDate": "Arriving",
+    "transit.destinationTime": ""
+  }
+}

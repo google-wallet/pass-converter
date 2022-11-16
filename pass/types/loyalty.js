@@ -91,8 +91,8 @@ class Loyalty extends Pass {
     });
 
     this.update(pass.loyaltyObjects[0], {
-      pointsBalance: this.toGoogleBalanceField(this.primaryBalance),
-      secondaryPointsBalance: this.toGoogleBalanceField(this.secondaryBalance),
+      loyaltyPoints: this.toGoogleBalanceField(this.primaryBalance),
+      secondaryLoyaltyPoints: this.toGoogleBalanceField(this.secondaryBalance),
     });
 
     return pass;

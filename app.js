@@ -28,18 +28,7 @@ const NodeCache = require('node-cache');
 const nanoid = require('nanoid').nanoid;
 const apn = require('apn');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
-
-/**
- * Path to service account key file from Google Cloud Console
- * @type {string}
- */
-const serviceAccountFile = process.env.GOOGLE_APPLICATION_CREDENTIALS || '/path/to/key.json';
-
-/**
- * Google Cloud Storage bucket name
- * @type {string}
- */
-const storageBucket = process.env.GOOGLE_STORAGE_BUCKET;
+const config = require('./config.js');
 
 /**
  * Internal cache of images
@@ -48,22 +37,13 @@ const storageBucket = process.env.GOOGLE_STORAGE_BUCKET;
 const images = new NodeCache();
 
 /**
- * Google Cloud service account credentials
- * @type {Object}
- */
-const credentials = require(serviceAccountFile);
-
-/**
- * Access scope for the Google Wallet API
- * @type {string}
- */
-const scopes = 'https://www.googleapis.com/auth/wallet_object.issuer';
-
-/**
  * HTTP client for making API calls
  * @type {GoogleAuth}
  */
-const httpClient = new GoogleAuth({ credentials, scopes });
+const httpClient = new GoogleAuth({
+  credentials: require(config.googleServiceAccountJsonPath),
+  scopes: 'https://www.googleapis.com/auth/wallet_object.issuer',
+});
 
 /**
  * Handler function for images to handle saving and hosting
@@ -86,15 +66,15 @@ async function pkpassImageHandler(imageBuffer, imageHost) {
 
   // If you're using Google Cloud Storage, this will store the image there
   // Otherwise, the image is added to the local cache
-  if (storageBucket) {
+  if (config.googleStorageBucket) {
     // Generate the object URI
-    imageHost = `https://storage.googleapis.com/${storageBucket}/`;
+    imageHost = `https://storage.googleapis.com/${config.googleStorageBucket}/`;
 
     // Create a Cloud Storage client
-    const storage = new Storage({ serviceAccountFile: serviceAccountFile });
+    const storage = new Storage({ serviceAccountFile: config.googleServiceAccountJsonPath });
 
     // Store the image in the bucket
-    await storage.bucket(storageBucket).file(imageName).save(imageBuffer);
+    await storage.bucket(config.googleStorageBucket).file(imageName).save(imageBuffer);
   } else if (imageHost) {
     if (new Set(['localhost', '127.0.0.1']).has(new URL(imageHost).hostname)) {
       return;
@@ -126,7 +106,7 @@ async function googleToPkPass(googlePass, apiHost) {
     serialNumber: pass.id,
     webServiceURL: pass.webServiceURL,
     authenticationToken: pass.authenticationToken,
-    passTypeId: process.env.PKPASS_PASS_TYPE_ID,
+    passTypeId: config.pkPassPassTypeId,
     googlePrefix: pass.googlePrefix,
   });
 
@@ -135,6 +115,7 @@ async function googleToPkPass(googlePass, apiHost) {
 }
 
 function encodeJwt(payload, checkLength = true) {
+  const credentials = require(config.googleServiceAccountJsonPath);
   const token = jwt.sign(
     {
       iss: credentials.client_email,
@@ -258,9 +239,9 @@ app.get('/image/:name', (req, res) => {
  * and sets some request variables for the pass conversion to access.
  */
 app.use('/convert/', (req, res, next) => {
-  if (!DEMO && req.headers[process.env.CONVERTER_AUTH_HEADER] === undefined) {
-    if (process.env.CONVERTER_AUTH_HEADER === undefined) {
-      console.error('env var CONVERTER_AUTH_HEADER must be defined and set by upstream web server');
+  if (!DEMO && req.headers[config.authHeader] === undefined) {
+    if (config.authHeader === undefined) {
+      console.error('converterAuthHeader config must be defined and set by upstream web server');
     }
     res.status(401).end();
     return;
@@ -304,7 +285,7 @@ app.post('/convert/', async (req, res) => {
  */
 app.patch('/convert/', async (req, res) => {
   let pass, googlePass;
-  if (req.passText.charAt(0) === '{')   {
+  if (req.passText.charAt(0) === '{') {
     googlePass = JSON.parse(req.passText);
     pass = Pass.fromGoogle(googlePass);
 
@@ -312,11 +293,7 @@ app.patch('/convert/', async (req, res) => {
       .getRepository('registrations')
       .find({ serialNumber: pass.id })
       .then(registrations => {
-        const apnProvider = new apn.Provider({
-          production: false,
-          cert: process.env.PKPASS_APN_KEY_PATH,
-          key: process.env.PKPASS_APN_CERT_PATH,
-        });
+        const apnProvider = new apn.Provider(config.apn);
         registrations.forEach(registration => {
           apnProvider.send(new apn.Notification(), registration.pushToken).then(result => {
             console.log('apn push', result);
@@ -403,7 +380,7 @@ app.get('/v1/passes/:pass_type_id/:serial_number', async (req, res) => {
   // Retrieve pass content from Wallet API.
   httpClient
     .request({
-      url: `https://walletobjects.googleapis.com/walletobjects/v1/${req.passRecord.googlePrefix}Object/${process.env.GOOGLE_ISSUER_ID}.${req.passRecord.serialNumber}`,
+      url: `https://walletobjects.googleapis.com/walletobjects/v1/${req.passRecord.googlePrefix}Object/${config.googleIssuerId}.${req.passRecord.serialNumber}`,
       method: 'GET',
     })
     .then(response => {
@@ -489,10 +466,8 @@ async function main() {
   } else {
     database.initialize();
     // Express server invocation
-    const host = process.env.CONVERTER_BIND_HOST || '127.0.0.1';
-    const port = process.env.CONVERTER_BIND_PORT || 3000;
-    app.listen(port, host, () => {
-      console.log(`Listening on http://${host}:${port}`);
+    app.listen(config.bindPort, config.bindHost, () => {
+      console.log(`Listening on http://${config.bindHost}:${config.bindPort}`);
     });
   }
 }

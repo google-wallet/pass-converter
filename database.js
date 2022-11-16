@@ -1,4 +1,5 @@
 const typeorm = require('typeorm');
+const config = require('./config.js');
 
 const passes = new typeorm.EntitySchema({
   name: 'passes',
@@ -23,9 +24,4 @@ const registrations = new typeorm.EntitySchema({
   },
 });
 
-module.exports = new typeorm.DataSource({
-  type: 'sqlite',
-  database: 'database.sqlite',
-  synchronize: true,
-  entities: [passes, registrations],
-});
+module.exports = new typeorm.DataSource(Object.assign({ entities: [passes, registrations] }, config.database));
