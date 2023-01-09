@@ -309,7 +309,7 @@ app.patch('/convert/', async (req, res) => {
   try {
     const id = googlePass[pass.googlePrefix + 'Objects'][0].id;
     const response = await httpClient.request({
-      url: `https://walletobjects.googleapis.com/walletobjects/v1/${pass.googlePrefix}Objecst/${id}`,
+      url: `https://walletobjects.googleapis.com/walletobjects/v1/${pass.googlePrefix}Objects/${id}`,
       method: 'PATCH',
       data: googlePass[pass.googlePrefix + 'Objects'][0],
     });
