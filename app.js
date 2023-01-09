@@ -37,11 +37,17 @@ const config = require('./config.js');
 const images = new NodeCache();
 
 /**
+ * Google service account credentials
+ * @type {Object}
+ */
+const credentials = config.googleServiceAccountJsonPath && require(config.googleServiceAccountJsonPath);
+
+/**
  * HTTP client for making API calls
  * @type {GoogleAuth}
  */
 const httpClient = new GoogleAuth({
-  credentials: require(config.googleServiceAccountJsonPath),
+  credentials: credentials,
   scopes: 'https://www.googleapis.com/auth/wallet_object.issuer',
 });
 
@@ -83,7 +89,7 @@ async function pkpassImageHandler(imageBuffer, imageHost) {
     images.set(imageName, imageBuffer);
   } else {
     // Called when converting pass locally without GCS configured
-    throw 'Cannot determine public host for images...try setting the GOOGLE_STORAGE_BUCKET env var';
+    throw 'Cannot determine public host for images, googleStorageBucket config must be defined';
   }
 
   // Return the URI for the image
@@ -115,7 +121,6 @@ async function googleToPkPass(googlePass, apiHost) {
 }
 
 function encodeJwt(payload, checkLength = true) {
-  const credentials = require(config.googleServiceAccountJsonPath);
   const token = jwt.sign(
     {
       iss: credentials.client_email,
@@ -144,6 +149,10 @@ function encodeJwt(payload, checkLength = true) {
  * @returns {string} Add to Google Wallet link
  */
 async function pkPassToGoogle(pkPass, imageHost) {
+  if (!credentials) {
+    throw `Cannot convert to Google Wallet pass, googleServiceAccountJsonPath config must be defined`;
+  }
+
   // Create the intermediary pass object
   const pass = Pass.fromPkPass(pkPass);
 
