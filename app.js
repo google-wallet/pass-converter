@@ -89,7 +89,8 @@ async function pkpassImageHandler(imageBuffer, imageHost) {
     images.set(imageName, imageBuffer);
   } else {
     // Called when converting pass locally without GCS configured
-    throw 'Cannot determine public host for images, googleStorageBucket config must be defined';
+    console.warn(`Cannot determine public host for image ${imageName} as googleStorageBucket config is not defined. The resulting pass will not be savable to Google Wallet without adding the URL for this image.`);
+    imageHost = '';
   }
 
   // Return the URI for the image
