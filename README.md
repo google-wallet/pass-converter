@@ -163,6 +163,8 @@ You can also use [Google Cloud Storage](https://cloud.google.com/storage) to hos
 2. Use [Cloud Identity and Access Management (Cloud IAM)](https://cloud.google.com/storage/docs/access-control/using-iam-permissions) to give your service account read/write access
 3. Set the `googleStorageBucket` `config.js` variable to the name of the bucket you created
 
+**Note:** You can still use the converter as a command-line tool to convert passes locally without configuring image hosting, however the resulting Google passes will not be usable without valid image URLs.
+
 ### Creating and signing Apple passes
 
 To create valid `PKPass` files (they are cryptographically signed and viewable on Apple devices), you will need to follow the steps below.
