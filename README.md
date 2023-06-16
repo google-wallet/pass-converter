@@ -9,6 +9,18 @@ The tool is built with JavaScript/Node.js and can run as a web service accepting
 
 **Note:** This project covers the server-side implementation for creating passes, it does not deal with any front-end concerns such as buttons for saving passes to wallets. For further guidance on this, please consult the branding and usage guidelines for each wallet platform.
 
+# Table of contents
+
+- [Supported pass types](#supported-pass-types)
+- [Setup](#setup)
+- [Usage](#usage)
+- [Pass file formats](#pass-file-formats)
+- [Configuration](#configuration)
+- [External dependencies](#external-dependencies)
+- [Hints for Google passes](#hints-for-google-passes)
+- [Updatable Passes](#updatable-passes)
+- [Troubleshooting](#troubleshooting)
+
 ## Supported pass types
 
 The following table shows the mapping of pass types between each supported wallet platform.
