@@ -1,30 +1,30 @@
 {
   "dependencies": {
-    "@google-cloud/storage": "^6.2.2",
-    "adm-zip": "^0.5.9",
+    "@google-cloud/storage": "^6.12.0",
+    "adm-zip": "^0.5.10",
     "airlines-iata-codes": "^1.0.1",
     "apn": "^2.2.0",
     "axios": "^0.27.2",
-    "chrono-node": "^2.3.9",
-    "express": "^4.18.1",
+    "chrono-node": "^2.6.4",
+    "express": "^4.18.2",
     "express-fileupload": "^1.4.0",
-    "google-auth-library": ">=5.9.2",
-    "jsonwebtoken": ">=8.5.1",
-    "nanoid": "^3.3.4",
+    "google-auth-library": "^9.0.0",
+    "jsonwebtoken": "^9.0.1",
+    "nanoid": "^3.3.6",
     "node-cache": "^5.1.2",
-    "node-fetch": "^3.2.8",
-    "open": "^8.4.0",
-    "sqlite3": "^5.1.2",
+    "node-fetch": "^3.3.2",
+    "open": "^8.4.2",
+    "sqlite3": "^5.1.6",
     "strip-comments": "^2.0.1",
     "strip-json-trailing-commas": "^1.1.0",
-    "tinycolor2": "^1.4.2",
-    "typeorm": "^0.3.10"
+    "tinycolor2": "^1.6.0",
+    "typeorm": "^0.3.17"
   },
   "scripts": {
     "test": "jest"
   },
   "devDependencies": {
-    "jest": "^27.0.6",
+    "jest": "^27.5.1",
     "prettier": "2.7.1"
   }
 }
