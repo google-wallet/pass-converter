@@ -183,10 +183,10 @@ To create valid `PKPass` files (they are cryptographically signed and viewable o
 
 **Note:** Omitting these steps and converting to unsigned Apple passes is also supported, however the resulting `PKPass` file will not be readable by an Apple device. In this case you may use the converter to create unsigned passes, then perform the signing in your own application separately.
 
-1. Create an [Apple Developer Program](https://developer.apple.com/programs/) account, if you do not have one already
-2. [Create a pass type identifier](https://developer.apple.com/documentation/walletpasses/building_a_pass)
-3. [Create a certificate signing request (CSR)](https://help.apple.com/developer-account/#/devbfa00fef7)
-4. [Generate and download the signing certificate](https://developer.apple.com/documentation/walletpasses/building_a_pass)
+1. Create an [Apple Developer Program](https://developer.apple.com/programs/) account, if you do not have one already, and identify your [Team ID](https://developer.apple.com/help/account/manage-your-team/locate-your-team-id/)
+2. [Create a pass type identifier](https://developer.apple.com/documentation/walletpasses/building_a_pass#3732526)
+3. [Create a certificate signing request (CSR)](https://developer.apple.com/help/account/create-certificates/create-a-certificate-signing-request)
+4. [Generate and download the signing certificate](https://developer.apple.com/documentation/walletpasses/building_a_pass#3732524)
 5. Import the signing certificate into the OSX keychain, and export it as _certificates.p12_
 6. Download one of the [Apple Worldwide Developer Relations (WWDR) certificates](https://www.apple.com/certificateauthority/)
 7. Import the WWDR root certificate into the OSX keychain, and export it as _wwdr.pem_
