@@ -10,7 +10,7 @@
     "express-fileupload": "^1.4.0",
     "google-auth-library": "^9.0.0",
     "jsonwebtoken": "^9.0.1",
-    "nanoid": "^3.3.6",
+    "nanoid": "^3.3.8",
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.2",
     "open": "^8.4.2",
