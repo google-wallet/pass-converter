@@ -18,7 +18,7 @@
     "strip-comments": "^2.0.1",
     "strip-json-trailing-commas": "^1.1.0",
     "tinycolor2": "^1.6.0",
-    "typeorm": "^0.3.17"
+    "typeorm": "^0.3.26"
   },
   "scripts": {
     "test": "jest"
