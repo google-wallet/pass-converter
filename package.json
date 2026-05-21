@@ -14,17 +14,17 @@
     "node-cache": "^5.1.2",
     "node-fetch": "^3.3.2",
     "open": "^8.4.2",
-    "sqlite3": "^5.1.6",
+    "sqlite3": "^6.0.1",
     "strip-comments": "^2.0.1",
     "strip-json-trailing-commas": "^1.1.0",
     "tinycolor2": "^1.6.0",
-    "typeorm": "^0.3.17"
+    "typeorm": "^1.0.0"
   },
   "scripts": {
     "test": "jest"
   },
   "devDependencies": {
-    "jest": "^27.5.1",
+    "jest": "^30.4.2",
     "prettier": "2.7.1"
   }
 }
