@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@google-cloud/storage": "^7.19.0",
-    "adm-zip": "^0.5.10",
+    "adm-zip": "^0.6.0",
     "airlines-iata-codes": "^1.0.1",
     "apn": "^1.6.2",
     "axios": "^1.15.2",
