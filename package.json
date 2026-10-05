@@ -4,7 +4,7 @@
     "adm-zip": "^0.6.1",
     "airlines-iata-codes": "^1.0.1",
     "apn": "^1.6.2",
-    "axios": "^1.18.0",
+    "axios": "^1.20.0",
     "chrono-node": "^2.6.4",
     "express": "^5.2.1",
     "express-fileupload": "^1.4.0",
