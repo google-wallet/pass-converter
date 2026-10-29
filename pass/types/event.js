@@ -15,6 +15,7 @@
  */
 
 const Pass = require('../');
+const { resolveFieldPath } = require('../utils');
 
 /**
  * Represents an
@@ -55,6 +56,41 @@ class Event extends Pass {
       title: this.fromGoogleLocalizedField(cls, 'eventName'),
       logo: this.fromGoogleImageField(cls.logo),
     });
+
+    const template = cls.classTemplateInfo || {};
+    const override = template.cardTemplateOverride || {};
+    const rows = override.cardRowTemplateInfos || [];
+
+    const fieldsToPkPass = (item) => {
+      if (!item) return null;
+      const fieldPath = (item.firstValue || {}).fieldPath;
+      const resolved = resolveFieldPath(obj, cls, fieldPath);
+      if (resolved && resolved.header && resolved.body) {
+        return { key: resolved.id, label: resolved.header, value: resolved.body };
+      }
+      return null;
+    };
+
+    rows.forEach((row, i) => {
+      const items = [];
+      if (row.twoItems) {
+        items.push(fieldsToPkPass(row.twoItems.startItem));
+        items.push(fieldsToPkPass(row.twoItems.endItem));
+      } else if (row.threeItems) {
+        items.push(fieldsToPkPass(row.threeItems.startItem));
+        items.push(fieldsToPkPass(row.threeItems.middleItem));
+        items.push(fieldsToPkPass(row.threeItems.endItem));
+      } else if (row.oneItem) {
+        items.push(fieldsToPkPass(row.oneItem.item));
+      }
+
+      const validItems = items.filter(Boolean);
+      if (i === 0) {
+        this.secondaryFields = (this.secondaryFields || []).concat(validItems);
+      } else {
+        this.auxiliaryFields = (this.auxiliaryFields || []).concat(validItems);
+      }
+    });
   }
 
   /**
@@ -72,6 +108,8 @@ class Event extends Pass {
           value: this.title,
         },
       ],
+      secondaryFields: this.secondaryFields || [],
+      auxiliaryFields: this.auxiliaryFields || [],
     });
     return super.toPkPass(imageHandler);
   }
