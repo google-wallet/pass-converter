@@ -27,6 +27,33 @@ function flatten(array) {
 }
 
 /**
+ * Resolves a Google Wallet field path string to a value from the pass object.
+ * Supports paths like 'class.textModulesData[\'id\']' or 'object.textModulesData[\'id\']'
+ * @param {Object} obj The Google Wallet object
+ * @param {Object} cls The Google Wallet class
+ * @param {string} path The field path string
+ * @returns {Object|null} The resolved field object (e.g. text module) or null
+ */
+function resolveFieldPath(obj, cls, path) {
+  if (!path) return null;
+
+  const textModuleMatch = path.match(/(class|object)\.textModulesData\['(.+)'\]/);
+  if (textModuleMatch) {
+    const source = textModuleMatch[1] === 'class' ? cls : obj;
+    return (source.textModulesData || []).find(m => m.id === textModuleMatch[2]);
+  }
+
+  // Basic path resolution for direct fields if needed
+  const parts = path.split('.');
+  let current = parts[0] === 'class' ? cls : obj;
+  for (let i = 1; i < parts.length; i++) {
+    if (!current) return null;
+    current = current[parts[i]];
+  }
+  return current;
+}
+
+/**
  * Maps PKPass barcode types to Google Wallet barcode types
  * @class
  */
@@ -122,11 +149,11 @@ class Lproj {
   }
 
   export(obj) {
-    return JSON.stringify(obj).replace(/":"/g, '" = "').replace(/",/g, '";\n').slice(1, -1) + ';';
+    return JSON.stringify(obj).replace(/\":\"/g, '" = "').replace(/\",/g, '";\n').slice(1, -1) + ';';
   }
 }
 
 const barcodes = new Barcodes();
 const lproj = new Lproj();
 
-module.exports = { barcodes, lproj, flatten };
+module.exports = { barcodes, lproj, flatten, resolveFieldPath };
