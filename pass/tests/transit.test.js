@@ -15,6 +15,10 @@
  */
 
 const { loadPass, pkPassHasValue } = require('./utils.js');
+const Pass = require('../index.js');
+const { google } = require('googleapis');
+
+jest.mock('googleapis');
 
 const fieldTests = {
   'an origin name': pass => pass.originName,
@@ -33,4 +37,40 @@ for (const [fieldName, getField] of Object.entries(fieldTests)) {
 test(`a converted transit pkpass has a transit type`, async () => {
   const { pkPass, pass } = await loadPass('transit.pkpass');
   expect(pkPass.boardingPass.transitType).toBe('PKTransitTypeGeneric');
+});
+
+test('a converted transit pass from a reference-only (skinny) JWT', async () => {
+  const mockPassObject = {
+    id: '12345.object',
+    classId: '12345.class',
+    hexBackgroundColor: '#ffffff',
+    barcode: { type: 'QR_CODE', value: 'test' },
+  };
+  const mockPassClass = {
+    id: '12345.class',
+    issuerName: 'Test Issuer',
+  };
+
+  google.auth.GoogleAuth.prototype.getClient = jest.fn().mockResolvedValue({});
+  google.walletobjects.mockReturnValue({
+    transitobject: {
+      get: jest.fn().mockResolvedValue({ data: mockPassObject }),
+    },
+    transitclass: {
+      get: jest.fn().mockResolvedValue({ data: mockPassClass }),
+    },
+  });
+
+  const skinnyJwt = {
+    transitObjects: [
+      {
+        classId: '12345.class',
+        id: '12345.object',
+      },
+    ],
+  };
+
+  const pass = await Pass.fromGoogle(skinnyJwt);
+  expect(pass.id).toBe('object');
+  expect(pass.issuer).toBe('Test Issuer');
 });

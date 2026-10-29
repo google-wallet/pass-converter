@@ -23,6 +23,7 @@ const stripJsonTrailingCommas = require('strip-json-trailing-commas').default;
 const AdmZip = require('adm-zip');
 const color = require('tinycolor2');
 const nanoid = require('nanoid').nanoid;
+const { google } = require('googleapis');
 const { barcodes, lproj, flatten } = require('./utils.js');
 const config = require('../config.js');
 
@@ -165,25 +166,42 @@ class Pass {
    * @returns {Pass} A converted Pass object
    * @static
    */
-  static fromGoogle(jwtPayload) {
+  static async fromGoogle(jwtPayload) {
     // Get the Google Wallet pass type
-    const googlePrefix = Object.keys(jwtPayload)[0].replace(/Classes|Objects/, '');
+    const googlePrefix = Object.keys(jwtPayload).find(key => key.endsWith('Objects')).replace(/Objects$/, '');
 
     // Create a basic Pass object of the derived type
     const pass = createPassForType(cls => cls.googlePrefix === googlePrefix);
 
-    // Get the Google Wallet pass object payload
-    const json = jwtPayload[`${pass.googlePrefix}Objects`][0];
+    let json = jwtPayload[`${googlePrefix}Objects`][0];
+    let cls = jwtPayload[`${googlePrefix}Classes`] ? jwtPayload[`${googlePrefix}Classes`][0] : undefined;
+
+    // Handle reference-only objects (skinny JWT) by fetching from API
+    if (Object.keys(json).length <= 2 && json.id && json.classId) {
+      const auth = new google.auth.GoogleAuth({
+        scopes: ['https://www.googleapis.com/auth/wallet_object.issuer'],
+      });
+      const wallet = google.walletobjects({
+        version: 'v1',
+        auth: await auth.getClient(),
+      });
+
+      const responseObj = await wallet[googlePrefix + 'object'].get({ resourceId: json.id });
+      json = responseObj.data;
+
+      const responseCls = await wallet[googlePrefix + 'class'].get({ resourceId: json.classId });
+      cls = responseCls.data;
+    }
 
     let frontContent = [];
     let textModulesData = [];
-    if (jwtPayload[`${googlePrefix}Objects`][0].textModulesData) {
+    if (json.textModulesData) {
       // Get the front content from the class template
       frontContent =
-        jwtPayload[`${googlePrefix}Classes`][0].classTemplateInfo.cardTemplateOverride.cardRowTemplateInfos;
+        cls.classTemplateInfo.cardTemplateOverride.cardRowTemplateInfos;
 
       // Get the text content from the pass
-      textModulesData = jwtPayload[`${googlePrefix}Objects`][0].textModulesData;
+      textModulesData = json.textModulesData;
     }
 
     const strings = {};
@@ -244,7 +262,7 @@ class Pass {
     });
 
     // Get the back content (InfoModuleData) from the pass
-    let backContent = jwtPayload[`${googlePrefix}Objects`][0].infoModuleData;
+    let backContent = json.infoModuleData;
 
     // Check if there is any back content present
     backContent =
@@ -264,14 +282,14 @@ class Pass {
             }),
           );
 
-    const id = jwtPayload[`${googlePrefix}Objects`][0].id || nanoid();
-    const classId = jwtPayload[`${googlePrefix}Objects`][0].classId || nanoid();
+    const id = json.id || nanoid();
+    const classId = json.classId || nanoid();
 
     // Set the properties of the Pass from the Google Wallet pass content
     pass.update({
       id: id ? id.replace(`${config.googleIssuerId}\.`, '') : undefined,
       typeId: classId ? classId.replace(`${config.googleIssuerId}\.`, '') : undefined,
-      issuer: jwtPayload[`${googlePrefix}Classes`][0].issuerName,
+      issuer: cls.issuerName,
       barcode: barcodes.fromGoogle(json.barcode),
       backgroundColor: color(json.hexBackgroundColor),
       frontContent: frontContent,
@@ -280,7 +298,7 @@ class Pass {
     });
 
     // Return the derived Pass object
-    pass.fromGoogle(json, jwtPayload[`${pass.googlePrefix}Classes`][0]);
+    pass.fromGoogle(json, cls);
     return pass;
   }
 
@@ -319,7 +337,7 @@ class Pass {
                 {
                   message: this.barcode.message,
                   format: barcodes.formats[this.barcode.format].pkpass,
-                },
+                }
               ],
         [this.pkpassContentFields]: this.content,
       }),
