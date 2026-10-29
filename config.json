@@ -5,6 +5,9 @@
   // Issuer ID for Google Wallet APIs
   "googleIssuerId": "",
 
+  // Image hosting provider: 'gcs' or 'self-hosted'
+  "imageHostingProvider": "gcs",
+
   // Google Cloud Storage bucket name
   "googleStorageBucket": "",
 
