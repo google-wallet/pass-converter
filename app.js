@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const { Storage } = require('@google-cloud/storage');
 const { GoogleAuth } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const Pass = require('./pass');
@@ -29,6 +28,9 @@ const nanoid = require('nanoid').nanoid;
 const apn = require('apn');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 const config = require('./config.js');
+
+const gcsProvider = require('./image-hosting/gcs');
+const selfHostedProvider = require('./image-hosting/self-hosted');
 
 /**
  * Internal cache of images
@@ -70,31 +72,24 @@ async function pkpassImageHandler(imageBuffer, imageHost) {
   // Generate a randomized name for the image file
   const imageName = `image-${nanoid()}.png`;
 
-  // If you're using Google Cloud Storage, this will store the image there
-  // Otherwise, the image is added to the local cache
-  if (config.googleStorageBucket) {
-    // Generate the object URI
-    imageHost = `https://storage.googleapis.com/${config.googleStorageBucket}/`;
+  const provider = config.imageHostingProvider || (config.googleStorageBucket ? 'gcs' : 'cache');
 
-    // Create a Cloud Storage client
-    const storage = new Storage({ serviceAccountFile: config.googleServiceAccountJsonPath });
-
-    // Store the image in the bucket
-    await storage.bucket(config.googleStorageBucket).file(imageName).save(imageBuffer);
+  if (provider === 'gcs') {
+    return await gcsProvider.upload(imageName, imageBuffer);
+  } else if (provider === 'self-hosted') {
+    return await selfHostedProvider.upload(imageName, imageBuffer, imageHost);
   } else if (imageHost) {
     if (new Set(['localhost', '127.0.0.1']).has(new URL(imageHost).hostname)) {
       return;
     }
     // Add the image to the cache
     images.set(imageName, imageBuffer);
+    return `${imageHost}${imageName}`;
   } else {
-    // Called when converting pass locally without GCS configured
-    console.warn(`Cannot determine public host for image ${imageName} as googleStorageBucket config is not defined. The resulting pass will not be savable to Google Wallet without adding the URL for this image.`);
-    imageHost = '';
+    // Called when converting pass locally without image hosting configured
+    console.warn(`Cannot determine public host for image ${imageName} as image hosting config is not defined. The resulting pass will not be savable to Google Wallet without adding the URL for this image.`);
+    return imageName;
   }
-
-  // Return the URI for the image
-  return `${imageHost}${imageName}`;
 }
 
 /**
@@ -228,6 +223,9 @@ const app = express();
 app.use(upload());
 app.use(express.json());
 
+// Serve uploaded images statically
+app.use('/uploads', express.static(path.resolve(__dirname, 'public/uploads')));
+
 // Check if this is running as a demo
 // If so, mount the static files middleware, using the 'public' directory
 // This serves the demo page
@@ -264,6 +262,7 @@ app.use('/convert/', (req, res, next) => {
   req.passFile = req.files[Object.keys(req.files)[0]].data;
   req.passText = req.passFile.toString();
   req.fullUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+  req.imageHost = `${req.protocol}://${req.get('host')}/`;
 
   try {
     next();
@@ -284,7 +283,7 @@ app.post('/convert/', async (req, res) => {
     sendBuffer(res, 'application/vnd.apple.pkpass', 'pass.pkpass', pkPassBuffer);
   } else {
     // The file is a PKPass, convert to a Google Wallet pass
-    const googlePassUrl = await pkPassToGoogle(req.passFile, `${req.fullUrl}image/`);
+    const googlePassUrl = await pkPassToGoogle(req.passFile, config.imageHostingProvider === 'self-hosted' ? `${req.imageHost}uploads/` : `${req.fullUrl}image/`);
     // Redirect to the Add to Google Wallet URL
     res.redirect(googlePassUrl);
   }
@@ -312,7 +311,8 @@ app.patch('/convert/', async (req, res) => {
       });
   } else {
     pass = Pass.fromPkPass(req.passFile);
-    googlePass = await pass.toGoogle(async imageBuffer => pkpassImageHandler(imageBuffer, `${req.fullUrl}image/`));
+    const imgPath = config.imageHostingProvider === 'self-hosted' ? `${req.imageHost}uploads/` : `${req.fullUrl}image/`;
+    googlePass = await pass.toGoogle(async imageBuffer => pkpassImageHandler(imageBuffer, imgPath));
   }
 
   // Update the object via API.
@@ -441,7 +441,7 @@ async function convertPassLocal(inputPath, outputPath) {
   switch (ext) {
     case '.pkpass':
       // Convert a PKPass to a Google Wallet pass
-      pass = await Pass.fromPkPass(fs.readFileSync(inputPath)).toGoogle(pkpassImageHandler);
+      pass = await Pass.fromPkPass(fs.readFileSync(inputPath)).toGoogle(async imageBuffer => pkpassImageHandler(imageBuffer, ''));
       break;
     case '.json':
       // Convert a Google Wallet pass to a PKPass
