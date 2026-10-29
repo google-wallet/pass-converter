@@ -152,6 +152,7 @@ class Pass {
         json[pass.pkpassContentFields].auxiliaryFields,
       ].filter(fields => fields && fields.length > 0),
       backContent: json[pass.pkpassContentFields].backFields || [],
+      locations: json.locations || [],
     });
 
     // Return the derived Pass object
@@ -197,7 +198,7 @@ class Pass {
     let textModulesData = [];
     if (json.textModulesData) {
       // Get the front content from the class template
-      frontContent =
+      frontContent = 
         cls.classTemplateInfo.cardTemplateOverride.cardRowTemplateInfos;
 
       // Get the text content from the pass
@@ -265,7 +266,7 @@ class Pass {
     let backContent = json.infoModuleData;
 
     // Check if there is any back content present
-    backContent =
+    backContent = 
       !backContent || backContent.labelValueRows === undefined
         ? undefined
         : flatten(
@@ -340,6 +341,7 @@ class Pass {
                 }
               ],
         [this.pkpassContentFields]: this.content,
+        locations: this.locations && this.locations.length > 0 ? this.locations : undefined,
       }),
     );
 
@@ -520,7 +522,7 @@ class Pass {
     });
 
     // Create the InfoModuleData from the Pass back content
-    const infoModuleData =
+    const infoModuleData = 
       this.backContent.length === 0
         ? undefined
         : {
@@ -535,6 +537,15 @@ class Pass {
               };
             }),
           };
+
+    // Convert locations to Google Wallet format
+    const locations = (this.locations || []).map(location => {
+      return {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        label: location.relevantText ? this.toGoogleLocalizedField(location.relevantText) : undefined,
+      };
+    });
 
     // Return the Google Wallet pass classes and objects
     return {
@@ -564,6 +575,7 @@ class Pass {
           hexBackgroundColor: this.backgroundColor.toHexString(),
           textModulesData: textModulesData,
           infoModuleData: infoModuleData,
+          locations: locations.length > 0 ? locations : undefined,
           state: 'ACTIVE',
         },
       ],
